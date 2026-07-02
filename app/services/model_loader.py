@@ -1,39 +1,25 @@
 import os
 import tensorflow as tf
-
-from config import (
-    BUCKET_NAME,
-    MODEL_BLOB
-)
-
-from services.gcs_loader import (
-    download_blob
-)
-
-LOCAL_MODEL = "/tmp/model.keras"
+from config import MODEL_PATH
 
 model = None
 
 
 def load_model():
-
     global model
 
+    # If already loaded in memory, reuse it
     if model is not None:
         return model
 
-    if not os.path.exists(
-        LOCAL_MODEL
-    ):
-
-        download_blob(
-            BUCKET_NAME,
-            MODEL_BLOB,
-            LOCAL_MODEL
+    # Ensure model exists locally
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(
+            f"Model file not found at {MODEL_PATH}. "
+            "Please ensure the model is downloaded or included in the repo."
         )
 
-    model = tf.keras.models.load_model(
-        LOCAL_MODEL
-    )
+    # Load model once
+    model = tf.keras.models.load_model(MODEL_PATH)
 
     return model
