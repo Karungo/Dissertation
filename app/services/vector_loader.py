@@ -19,3 +19,51 @@ from config import (
 VECTOR_DIR = "/tmp/vectorstore"
 
 vectorstore = None
+
+def load_vectorstore():
+
+    global vectorstore
+
+    if vectorstore is not None:
+        return vectorstore
+
+    os.makedirs(
+        VECTOR_DIR,
+        exist_ok=True
+    )
+
+    index_path = (
+        f"{VECTOR_DIR}/index.faiss"
+    )
+
+    pkl_path = (
+        f"{VECTOR_DIR}/index.pkl"
+    )
+
+    if not os.path.exists(index_path):
+
+        download_blob(
+            BUCKET_NAME,
+            FAISS_INDEX_BLOB,
+            index_path
+        )
+
+        download_blob(
+            BUCKET_NAME,
+            FAISS_META_BLOB,
+            pkl_path
+        )
+
+    embeddings = (
+        GoogleGenerativeAIEmbeddings(
+            model="models/embedding-001"
+        )
+    )
+
+    vectorstore = FAISS.load_local(
+        VECTOR_DIR,
+        embeddings,
+        allow_dangerous_deserialization=True
+    )
+
+    return vectorstore
