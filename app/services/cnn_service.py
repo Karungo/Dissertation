@@ -14,7 +14,7 @@ with open(
 
     CLASS_NAMES = json.load(f)
 
-IMG_SIZE = 380
+IMG_SIZE = 224
 
 
 def preprocess(image):
