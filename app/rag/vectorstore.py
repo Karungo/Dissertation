@@ -25,8 +25,8 @@ def load_vectorstore():
     meta_path = f"{VECTOR_DIR}/index.pkl"
 
     if not os.path.exists(index_path):
-        download_blob(BUCKET_NAME, FAISS_INDEX_BLOB, index_path)
-        download_blob(BUCKET_NAME, FAISS_META_BLOB, meta_path)
+        download_if_missing(BUCKET_NAME, FAISS_INDEX_BLOB, index_path)
+        download_if_missing(BUCKET_NAME, FAISS_META_BLOB, meta_path)
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-mpnet-base-v2"
