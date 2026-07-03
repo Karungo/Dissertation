@@ -1,8 +1,7 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash"
-)
+def get_llm():
+    return ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
 
 def generate_answer(question, predictions, docs):
