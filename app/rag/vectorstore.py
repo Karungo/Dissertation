@@ -1,23 +1,30 @@
+import threading
+
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
-from core.config import VECTOR_DIR
 
 _vectorstore = None
+_lock = threading.Lock()
 
-def get_vectorstore():
+
+def load_vectorstore():
+
     global _vectorstore
 
-    if _vectorstore:
-        return _vectorstore
+    if _vectorstore is None:
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-mpnet-base-v2"
-    )
+        with _lock:
 
-    _vectorstore = FAISS.load_local(
-        VECTOR_DIR,
-        embeddings,
-        allow_dangerous_deserialization=True
-    )
+            if _vectorstore is None:
+
+                embeddings = HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/all-mpnet-base-v2"
+                )
+
+                _vectorstore = FAISS.load_local(
+                    "/tmp/vectorstore",
+                    embeddings,
+                    allow_dangerous_deserialization=True
+                )
 
     return _vectorstore
