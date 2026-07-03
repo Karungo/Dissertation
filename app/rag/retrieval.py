@@ -1,9 +1,11 @@
-from rag.vectorstore import get_vectorstore
+from rag.vectorstore import load_vectorstore
+
 
 def retrieve_context(species, question):
-    vectorstore = get_vectorstore()
+
+    vectorstore = load_vectorstore()
 
     return vectorstore.similarity_search(
-        query=f"{species} {question}",
-        k=5
+        f"{species} {question}",
+        k=3
     )
