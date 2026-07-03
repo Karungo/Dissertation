@@ -1,7 +1,7 @@
 import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from ml.loader import download_blob
+from services.storage import download_if_missing
 from core.config import (
     BUCKET_NAME,
     FAISS_INDEX_BLOB,
