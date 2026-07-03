@@ -1,7 +1,7 @@
 import os
 import tensorflow as tf
 
-from config import MODEL_BLOB
+from core.config import MODEL_BLOB
 
 model = None
 
