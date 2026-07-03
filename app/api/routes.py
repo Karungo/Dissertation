@@ -1,10 +1,8 @@
-from fastapi import APIRouter
-from fastapi import UploadFile
-from fastapi import File
-from fastapi import Form
+from fastapi import APIRouter, UploadFile, File, Form
+
 from services.pipeline import analyze_image
 
-router = APIRouter()
+router = APIRouter(tags=["Wildlife"])
 
 
 @router.post("/analyze")
@@ -12,10 +10,4 @@ async def analyze(
     image: UploadFile = File(...),
     question: str = Form(...)
 ):
-
-    result = await analyze_image(
-        image,
-        question
-    )
-
-    return result
+    return await analyze_image(image, question)
