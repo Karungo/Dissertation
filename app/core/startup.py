@@ -1,10 +1,28 @@
-from services.storage import download_if_missing
-from core.config import *
+from contextlib import asynccontextmanager
+import asyncio
 
-def startup():
-    # model
-    download_if_missing(BUCKET_NAME, MODEL_BLOB, MODEL_PATH)
+from ml.loader import load_model
+from rag.vectorstore import load_vectorstore
 
-    # vectorstore
-    download_if_missing(BUCKET_NAME, FAISS_INDEX_BLOB, f"{VECTOR_DIR}/index.faiss")
-    download_if_missing(BUCKET_NAME, FAISS_META_BLOB, f"{VECTOR_DIR}/index.pkl")
+
+@asynccontextmanager
+async def lifespan(app):
+
+    loop = asyncio.get_running_loop()
+
+    model_task = loop.run_in_executor(
+        None,
+        load_model
+    )
+
+    vector_task = loop.run_in_executor(
+        None,
+        load_vectorstore
+    )
+
+    await asyncio.gather(
+        model_task,
+        vector_task
+    )
+
+    yield
