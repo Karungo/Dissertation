@@ -1,24 +1,20 @@
+import os
 import tensorflow as tf
-import threading
 
-MODEL_PATH = "models/maasai_mara_efficientnet_b4.keras"
+from config import MODEL_BLOB
 
-_model = None
-_lock = threading.Lock()
+model = None
 
 
 def load_model():
+    global model
 
-    global _model
+    if model is not None:
+        return model
 
-    if _model is None:
+    if not os.path.exists(MODEL_BLOB):
+        raise FileNotFoundError(MODEL_BLOB)
 
-        with _lock:
+    model = tf.keras.models.load_model(MODEL_BLOB)
 
-            if _model is None:
-
-                _model = tf.keras.models.load_model(
-                    MODEL_PATH
-                )
-
-    return _model
+    return model
