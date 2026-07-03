@@ -2,9 +2,7 @@ import os
 
 from langchain_community.vectorstores import FAISS
 
-from langchain_google_genai import (
-    GoogleGenerativeAIEmbeddings
-)
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 from services.gcs_loader import (
     download_blob
@@ -54,11 +52,9 @@ def load_vectorstore():
             pkl_path
         )
 
-    embeddings = (
-        GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001"
-        )
-    )
+    embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-mpnet-base-v2"
+)
 
     vectorstore = FAISS.load_local(
         VECTOR_DIR,
