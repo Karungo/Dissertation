@@ -50,7 +50,7 @@ question = st.text_input(
 )
 
 if uploaded_image is not None:
-    st.image(uploaded_image, caption="Uploaded photo", use_container_width=True)
+    st.image(uploaded_image, caption="Uploaded photo", use_column_width=True)
 
 submit = st.button("Analyze", type="primary", disabled=uploaded_image is None)
 
