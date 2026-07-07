@@ -1,49 +1,52 @@
 import os
 import json
 import logging
+import cv2
 import numpy as np
 import tensorflow as tf
 from PIL import Image
 from ml.loader import load_model
+from core.config import IMG_SIZE, TOP_K
 
-logger  = logging.getLogger(__name__)
-IMG_SIZE = 224  # Model was trained at 224x224
+logger = logging.getLogger(__name__)
 
-# Load class names using an absolute path so it works regardless of
-# the working directory uvicorn is launched from
 _BASE       = os.path.dirname(os.path.abspath(__file__))
-_CLASS_PATH = os.path.join(_BASE, "..", "models", "class_names.json")
+_META_PATH  = os.path.join(_BASE, "..", "models", "class_names.json")
 
-with open(_CLASS_PATH) as f:
-    CLASS_NAMES = json.load(f)
+# Loaded at import time — safe because startup() validates the file exists
+with open(_META_PATH) as f:
+    _meta = json.load(f)
 
-logger.info(f"Loaded {len(CLASS_NAMES)} class names.")
-
-
-def preprocess(image: Image.Image) -> np.ndarray:
-    """Resize and apply EfficientNet preprocessing."""
-    image = image.convert("RGB").resize((IMG_SIZE, IMG_SIZE))
-    arr   = np.array(image, dtype=np.float32)
-    arr   = tf.keras.applications.efficientnet.preprocess_input(arr)
-    return np.expand_dims(arr, axis=0)
+CLASS_TO_INDEX = _meta["class_to_index"]
+IDX_TO_CLASS   = {int(v): k for k, v in CLASS_TO_INDEX.items()}
+NUM_CLASSES    = len(IDX_TO_CLASS)
+logger.info(f"Loaded {NUM_CLASSES} class names")
 
 
-def predict_species(image: Image.Image, top_k: int = 3) -> list[dict]:
-    """
-    Run inference and return the top-k species predictions.
-    Each result is {"species": str, "confidence": float}.
-    """
+def classify_crop(crop_rgb: np.ndarray) -> list[dict]:
+    """Run EfficientNet-B4 on an RGB numpy crop. Returns top-k predictions."""
     model   = load_model()
-    arr     = preprocess(image)
-    preds   = model.predict(arr, verbose=0)[0]
-    indices = np.argsort(preds)[::-1][:top_k]
-
-    results = [
-        {
-            "species"   : CLASS_NAMES[i],
-            "confidence": round(float(preds[i]), 4)
-        }
-        for i in indices
+    resized = cv2.resize(crop_rgb, (IMG_SIZE, IMG_SIZE)).astype(np.float32)
+    tensor  = tf.keras.applications.efficientnet.preprocess_input(resized)
+    tensor  = np.expand_dims(tensor, 0)
+    probs   = model.predict(tensor, verbose=0)[0]
+    top_idx = np.argsort(probs)[::-1][:TOP_K]
+    return [
+        {"species": IDX_TO_CLASS[int(i)], "confidence": round(float(probs[i]), 4)}
+        for i in top_idx
     ]
-    logger.info(f"Top prediction: {results[0]['species']} ({results[0]['confidence']*100:.1f}%)")
-    return results
+
+
+def classify_full_image(image: Image.Image) -> list[dict]:
+    """Run EfficientNet-B4 on a full PIL Image. Used as YOLO fallback."""
+    model   = load_model()
+    img     = image.convert("RGB").resize((IMG_SIZE, IMG_SIZE))
+    arr     = np.array(img, dtype=np.float32)
+    arr     = tf.keras.applications.efficientnet.preprocess_input(arr)
+    arr     = np.expand_dims(arr, 0)
+    probs   = model.predict(arr, verbose=0)[0]
+    top_idx = np.argsort(probs)[::-1][:TOP_K]
+    return [
+        {"species": IDX_TO_CLASS[int(i)], "confidence": round(float(probs[i]), 4)}
+        for i in top_idx
+    ]
