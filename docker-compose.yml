@@ -1,35 +1,38 @@
+version: "3.9"
+
 services:
+
   api:
     build:
       context: ./app
-    image: maasai-mara-api:latest
+      dockerfile: Dockerfile
     container_name: maasai-mara-api
-    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
       - BUCKET_NAME=${BUCKET_NAME}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      # No GOOGLE_APPLICATION_CREDENTIALS / key file needed — the container
-      # inherits the VM's attached service account via the metadata server
-      # (Application Default Credentials). See DEPLOY.md.
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-key.json
+    volumes:
+      - ./secrets/gcp-key.json:/secrets/gcp-key.json:ro
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8080/health').status==200 else sys.exit(1)"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
 
   frontend:
     build:
       context: ./frontend
-    image: maasai-mara-frontend:latest
+      dockerfile: Dockerfile
     container_name: maasai-mara-frontend
-    restart: unless-stopped
     ports:
       - "8501:8501"
     environment:
-      # Talk to the API container over the internal docker-compose network
       - API_URL=http://api:8080
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
