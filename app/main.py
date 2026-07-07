@@ -1,11 +1,13 @@
 import logging
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from api.routes import router
 from core.startup import startup
 from ml.loader import load_model
 from rag.vectorstore import load_vectorstore
+from ml.yolo_detector import load_yolo
 
-# Configure logging for the whole application
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
@@ -13,8 +15,20 @@ logging.basicConfig(
 
 app = FastAPI(
     title="Maasai Mara Wildlife API",
-    description="CNN + RAG wildlife identification and Q&A system for Maasai Mara tourists.",
-    version="1.0"
+    description=(
+        "Intelligent wildlife query system for Maasai Mara tourists. "
+        "YOLOv8 multi-animal detection + EfficientNet-B4 species classification "
+        "+ OpenCV habitat analysis + Gemini RAG grounded answers."
+    ),
+    version="2.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -26,25 +40,33 @@ def on_startup():
 app.include_router(router)
 
 
+@app.get("/")
+def root():
+    return {
+        "message": "Maasai Mara Wildlife API",
+        "version": "2.0.0",
+        "docs"   : "/docs",
+        "health" : "/health"
+    }
+
+
 @app.get("/health")
 def health():
-    """
-    Health check that reflects the actual state of loaded components.
-    Returns 503 if either the CNN model or vectorstore failed to load.
-    """
-    from fastapi.responses import JSONResponse
+    """Real health check — verifies all components are loaded."""
+    try:
+        cnn_ok  = load_model()    is not None
+        vs_ok   = load_vectorstore() is not None
+        yolo_ok = load_yolo()     is not None
+    except Exception:
+        cnn_ok = vs_ok = yolo_ok = False
 
-    cnn_ok = load_model() is not None
-    vs_ok  = load_vectorstore() is not None
-
-    status = "ok" if (cnn_ok and vs_ok) else "degraded"
-    code   = 200 if status == "ok" else 503
-
+    status = "ok" if all([cnn_ok, vs_ok, yolo_ok]) else "degraded"
     return JSONResponse(
-        status_code=code,
+        status_code=200 if status == "ok" else 503,
         content={
             "status"     : status,
             "cnn_loaded" : cnn_ok,
-            "rag_loaded" : vs_ok
+            "rag_loaded" : vs_ok,
+            "yolo_loaded": yolo_ok,
         }
     )
