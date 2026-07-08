@@ -1,3 +1,4 @@
+import os
 """
 Maasai Mara Wildlife Guide — Streamlit Frontend
 Connects to the FastAPI backend at API_URL.
@@ -9,7 +10,7 @@ import streamlit as st
 from PIL import Image, ImageDraw
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-API_URL = "http://localhost:8080"   # Change to Cloud Run URL in production
+API_URL = os.getenv("API_URL", "http://localhost:8080")   # Change to Cloud Run URL in production
 
 # ── Page setup ────────────────────────────────────────────────────────────────
 st.set_page_config(
