@@ -1,4 +1,5 @@
 import io
+import time
 import logging
 from PIL import Image
 from ml.yolo_detector import detect_and_classify
@@ -6,21 +7,23 @@ from ml.cnn import classify_full_image
 from ml.habitat import analyse_habitat
 from rag.retrieval import retrieve_context
 from llm.gemini import generate_answer
+from services.bigquery_logger import log_query
 
 logger = logging.getLogger(__name__)
 
 
 async def run_pipeline(upload_file, question: str) -> dict:
     """
-    Full end-to-end pipeline:
+    Full end-to-end pipeline with BigQuery logging:
     1. Read image
-    2. YOLOv8 detect all animals + EfficientNet-B4 classify each crop
-    3. OpenCV habitat / scene analysis
-    4. FAISS retrieve relevant KB chunks per detected species
+    2. YOLOv8 detect + EfficientNet-B4 classify per crop
+    3. OpenCV habitat analysis
+    4. FAISS retrieve KB chunks per detected species
     5. Gemini generate grounded answer with source citations
-
-    Returns structured dict with all outputs.
+    6. Log full result to BigQuery (non-blocking)
     """
+    start = time.time()
+
     # ── Step 1: Read image ────────────────────────────────────────────────
     raw   = await upload_file.read()
     image = Image.open(io.BytesIO(raw)).convert("RGB")
@@ -28,9 +31,8 @@ async def run_pipeline(upload_file, question: str) -> dict:
     # ── Step 2: Detection + classification ────────────────────────────────
     detections = detect_and_classify(image)
 
-    # Fallback — if YOLO finds nothing, run CNN on full image
     if not detections:
-        logger.warning("YOLOv8 found no animals — running CNN on full image")
+        logger.warning("YOLOv8 found nothing — running CNN on full image")
         preds = classify_full_image(image)
         detections = [{
             "bbox"        : None,
@@ -41,10 +43,10 @@ async def run_pipeline(upload_file, question: str) -> dict:
             "top3"        : preds,
         }]
 
-    # ── Step 3: Habitat analysis ──────────────────────────────────────────
+    # ── Step 3: Habitat ───────────────────────────────────────────────────
     habitat = analyse_habitat(image)
 
-    # ── Step 4: Retrieve context — all detected species, deduplicated ─────
+    # ── Step 4: Retrieve — all species, deduplicated ──────────────────────
     seen_content, all_docs = set(), []
     for det in detections:
         for doc in retrieve_context(det["species"], question):
@@ -54,7 +56,6 @@ async def run_pipeline(upload_file, question: str) -> dict:
 
     context = "\n\n".join(d.page_content for d in all_docs)
 
-    # Build source citation list
     seen_src, sources = set(), []
     for doc in all_docs:
         m   = doc.metadata
@@ -67,10 +68,12 @@ async def run_pipeline(upload_file, question: str) -> dict:
                 f"(recorded: {m.get('date_recorded','')})"
             )
 
-    # ── Step 5: Generate answer ───────────────────────────────────────────
+    # ── Step 5: Generate ──────────────────────────────────────────────────
     answer = generate_answer(detections, habitat, context, sources, question)
 
-    return {
+    latency_ms = (time.time() - start) * 1000
+
+    result = {
         "num_animals" : len(detections),
         "detections"  : detections,
         "habitat"     : habitat,
@@ -78,4 +81,10 @@ async def run_pipeline(upload_file, question: str) -> dict:
         "answer"      : answer,
         "sources_used": len(all_docs),
         "sources"     : sources,
+        "latency_ms"  : round(latency_ms, 2),
     }
+
+    # ── Step 6: Log to BigQuery (non-blocking — never fails the request) ──
+    log_query(result, latency_ms)
+
+    return result
