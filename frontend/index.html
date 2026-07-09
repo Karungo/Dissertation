@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+
+  <!-- PWA meta tags -->
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Mara Guide"/>
+  <meta name="theme-color" content="#C8803A"/>
+  <meta name="description" content="Intelligent wildlife identification for Maasai Mara tourists"/>
+
+  <!-- PWA manifest and icons -->
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+
+  <title>Maasai Mara Wildlife Guide</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ── Reset ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --savanna : #C8803A;
+      --dusk    : #7B3F1E;
+      --earth   : #2A1A0E;
+      --night   : #0F0A05;
+      --cream   : #F5EDD8;
+      --dim     : rgba(245,237,216,0.4);
+      --muted   : rgba(200,128,58,0.15);
+      --serif   : 'Cormorant Garamond', Georgia, serif;
+      --mono    : 'DM Mono', monospace;
+      --body    : 'Outfit', sans-serif;
+
+      /* Safe area for phones with notch */
+      --safe-top    : env(safe-area-inset-top, 0px);
+      --safe-bottom : env(safe-area-inset-bottom, 0px);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background   : var(--night);
+      color        : var(--cream);
+      font-family  : var(--body);
+      font-weight  : 300;
+      min-height   : 100vh;
+      padding-top  : var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      overflow-x   : hidden;
+    }
+
+    /* ── Install banner ──────────────────────────────────────── */
+    #install-banner {
+      display         : none;
+      position        : fixed;
+      bottom          : calc(1rem + var(--safe-bottom));
+      left            : 1rem;
+      right           : 1rem;
+      background      : var(--dusk);
+      border          : 1px solid var(--savanna);
+      padding         : 0.9rem 1.2rem;
+      z-index         : 1000;
+      display         : none;
+      align-items     : center;
+      justify-content : space-between;
+      gap             : 1rem;
+    }
+    #install-banner p {
+      font-family : var(--mono);
+      font-size   : 0.72rem;
+      letter-spacing: 0.05em;
+      color       : var(--cream);
+    }
+    #install-banner .banner-btns {
+      display : flex;
+      gap     : 0.5rem;
+      flex-shrink: 0;
+    }
+    #install-banner button {
+      font-family : var(--mono);
+      font-size   : 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding     : 0.4rem 0.8rem;
+      cursor      : pointer;
+      border      : 1px solid var(--savanna);
+      transition  : all 0.2s;
+    }
+    #btn-install { background: var(--savanna); color: var(--night); }
+    #btn-dismiss { background: transparent; color: var(--cream); }
+
+    /* ── Nav bar ─────────────────────────────────────────────── */
+    nav {
+      position   : sticky;
+      top        : 0;
+      z-index    : 100;
+      background : rgba(15,10,5,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(200,128,58,0.15);
+      padding    : 0.75rem 1.5rem;
+      display    : flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      font-family : var(--serif);
+      font-size   : 1.1rem;
+      font-weight : 300;
+      color       : var(--cream);
+      letter-spacing: 0.02em;
+    }
+    .nav-brand em { font-style: italic; color: var(--savanna); }
+    .nav-status {
+      font-family : var(--mono);
+      font-size   : 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .nav-status.ok     { color: #5BA35B; }
+    .nav-status.error  { color: #C85A5A; }
+    .nav-status.check  { color: var(--dim); }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    main {
+      max-width : 860px;
+      margin    : 0 auto;
+      padding   : 2rem 1.5rem 6rem;
+    }
+
+    /* ── Hero ────────────────────────────────────────────────── */
+    .hero {
+      text-align    : center;
+      padding       : 3rem 0 2.5rem;
+      border-bottom : 1px solid rgba(200,128,58,0.12);
+      margin-bottom : 2.5rem;
+    }
+    .hero-eyebrow {
+      font-family   : var(--mono);
+      font-size     : 0.62rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color         : var(--savanna);
+      margin-bottom : 0.8rem;
+    }
+    .hero h1 {
+      font-family : var(--serif);
+      font-size   : clamp(2.2rem, 8vw, 4rem);
+      font-weight : 300;
+      line-height : 1.05;
+      margin-bottom: 0.4rem;
+    }
+    .hero h1 em { font-style: italic; color: var(--savanna); }
+    .hero-sub {
+      font-family : var(--serif);
+      font-size   : clamp(0.95rem, 2.5vw, 1.2rem);
+      font-style  : italic;
+      color       : var(--dim);
+      margin-bottom: 1.2rem;
+    }
+    .hero-desc {
+      font-size   : 0.88rem;
+      color       : var(--dim);
+      max-width   : 420px;
+      margin      : 0 auto;
+      line-height : 1.7;
+    }
+
+    /* ── Section label ───────────────────────────────────────── */
+    .section-label {
+      font-family   : var(--mono);
+      font-size     : 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color         : var(--savanna);
+      margin-bottom : 0.6rem;
+    }
+
+    /* ── Camera / Upload ─────────────────────────────────────── */
+    .upload-grid {
+      display               : grid;
+      grid-template-columns : 1fr 1fr;
+      gap                   : 0.8rem;
+      margin-bottom         : 1rem;
+    }
+    @media (max-width: 480px) {
+      .upload-grid { grid-template-columns: 1fr; }
+    }
+
+    .upload-btn {
+      display        : flex;
+      flex-direction : column;
+      align-items    : center;
+      justify-content: center;
+      gap            : 0.5rem;
+      padding        : 1.4rem 1rem;
+      border         : 1px solid rgba(200,128,58,0.3);
+      background     : rgba(200,128,58,0.04);
+      cursor         : pointer;
+      transition     : all 0.25s;
+      font-family    : var(--mono);
+      font-size      : 0.68rem;
+      letter-spacing : 0.12em;
+      text-transform : uppercase;
+      color          : var(--cream);
+    }
+    .upload-btn:hover, .upload-btn:active {
+      border-color: var(--savanna);
+      background  : rgba(200,128,58,0.1);
+    }
+    .upload-btn .btn-icon { font-size: 1.8rem; }
+    .upload-btn .btn-sub  { font-size: 0.55rem; color: var(--dim); margin-top: 0.2rem; }
+
+    /* Hide native file inputs */
+    #file-camera, #file-gallery { display: none; }
+
+    /* ── Preview ─────────────────────────────────────────────── */
+    .preview-wrap {
+      display      : none;
+      position     : relative;
+      margin-bottom: 1rem;
+      border       : 1px solid rgba(200,128,58,0.2);
+    }
+    .preview-wrap.visible { display: block; }
+    #preview-img {
+      width      : 100%;
+      max-height : 380px;
+      object-fit : cover;
+      display    : block;
+    }
+    #preview-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    .preview-actions {
+      position  : absolute;
+      top       : 0.6rem;
+      right     : 0.6rem;
+      display   : flex;
+      gap       : 0.4rem;
+    }
+    .preview-actions button {
+      background : rgba(15,10,5,0.75);
+      border     : 1px solid rgba(200,128,58,0.3);
+      color      : var(--savanna);
+      font-family: var(--mono);
+      font-size  : 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding    : 0.3rem 0.6rem;
+      cursor     : pointer;
+      transition : all 0.2s;
+    }
+    .preview-actions button:hover {
+      background: var(--savanna); color: var(--night);
+    }
+
+    /* ── Question input ──────────────────────────────────────── */
+    .question-wrap {
+      display       : flex;
+      margin-bottom : 0.8rem;
+    }
+    #question-input {
+      flex       : 1;
+      background : rgba(200,128,58,0.06);
+      border     : 1px solid rgba(200,128,58,0.25);
+      border-right: none;
+      color      : var(--cream);
+      font-family: var(--body);
+      font-size  : 0.95rem;
+      font-weight: 300;
+      padding    : 0.85rem 1rem;
+      outline    : none;
+      transition : border-color 0.25s;
+      /* Prevents iOS zoom on focus */
+      font-size  : max(16px, 0.95rem);
+    }
+    #question-input:focus {
+      border-color: var(--savanna);
+      background  : rgba(200,128,58,0.1);
+    }
+    #question-input::placeholder { color: var(--dim); font-style: italic; }
+
+    #ask-btn {
+      background : var(--savanna);
+      border     : 1px solid var(--savanna);
+      color      : var(--night);
+      font-family: var(--mono);
+      font-size  : 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding    : 0.85rem 1.4rem;
+      cursor     : pointer;
+      transition : all 0.25s;
+      white-space: nowrap;
+    }
+    #ask-btn:hover:not(:disabled) { background: var(--dusk); color: var(--cream); }
+    #ask-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Suggestion chips ────────────────────────────────────── */
+    .chips {
+      display    : flex;
+      flex-wrap  : wrap;
+      gap        : 0.4rem;
+      margin-bottom: 1.5rem;
+    }
+    .chip {
+      font-family   : var(--mono);
+      font-size     : 0.6rem;
+      letter-spacing: 0.06em;
+      color         : var(--dim);
+      border        : 1px solid rgba(200,128,58,0.2);
+      padding       : 0.3rem 0.7rem;
+      cursor        : pointer;
+      background    : none;
+      transition    : all 0.2s;
+    }
+    .chip:hover, .chip:active {
+      color        : var(--savanna);
+      border-color : rgba(200,128,58,0.5);
+      background   : rgba(200,128,58,0.06);
+    }
+
+    /* ── Loading ─────────────────────────────────────────────── */
+    .loading-wrap {
+      display      : none;
+      border       : 1px solid rgba(200,128,58,0.15);
+      background   : rgba(200,128,58,0.03);
+      padding      : 1.5rem 2rem;
+      margin-bottom: 1rem;
+    }
+    .loading-wrap.visible { display: block; }
+    .loading-step {
+      display    : flex;
+      align-items: center;
+      gap        : 0.8rem;
+      padding    : 0.4rem 0;
+      font-family: var(--mono);
+      font-size  : 0.68rem;
+      letter-spacing: 0.05em;
+      color      : rgba(245,237,216,0.25);
+      transition : color 0.3s;
+    }
+    .loading-step.active { color: var(--savanna); }
+    .loading-step.done   { color: rgba(245,237,216,0.5); }
+    .step-dot {
+      width        : 6px;
+      height       : 6px;
+      border-radius: 50%;
+      background   : currentColor;
+      flex-shrink  : 0;
+    }
+    .loading-step.active .step-dot { animation: blink 0.7s ease-in-out infinite alternate; }
+    @keyframes blink { from { opacity: 0.2; } to { opacity: 1; } }
+
+    /* ── Error ───────────────────────────────────────────────── */
+    .error-panel {
+      display      : none;
+      border       : 1px solid rgba(200,80,58,0.4);
+      background   : rgba(200,80,58,0.06);
+      padding      : 0.9rem 1.2rem;
+      margin-bottom: 1rem;
+      font-family  : var(--mono);
+      font-size    : 0.72rem;
+      color        : rgba(245,160,140,0.85);
+    }
+    .error-panel.visible { display: block; }
+
+    /* ── Results ─────────────────────────────────────────────── */
+    .results { display: none; animation: fadeUp 0.5s ease both; }
+    .results.visible { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-grid {
+      display               : grid;
+      grid-template-columns : 1fr 1fr;
+      gap                   : 1px;
+      background            : rgba(200,128,58,0.1);
+      margin-bottom         : 1rem;
+    }
+    @media (max-width: 540px) {
+      .results-grid { grid-template-columns: 1fr; }
+    }
+
+    .result-card {
+      background : var(--night);
+      padding    : 1.2rem 1.4rem;
+    }
+    .result-card-title {
+      font-family   : var(--mono);
+      font-size     : 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color         : var(--savanna);
+      margin-bottom : 0.8rem;
+    }
+
+    /* Species list */
+    .species-list { list-style: none; }
+    .species-item {
+      display       : flex;
+      align-items   : center;
+      gap           : 0.6rem;
+      padding       : 0.4rem 0;
+      border-bottom : 1px solid rgba(200,128,58,0.08);
+    }
+    .species-item:last-child { border-bottom: none; }
+    .species-name {
+      font-family: var(--serif);
+      font-size  : 1.05rem;
+      font-weight: 400;
+      color      : var(--cream);
+      flex       : 1;
+      text-transform: capitalize;
+    }
+    .species-conf {
+      font-family: var(--mono);
+      font-size  : 0.65rem;
+      color      : var(--savanna);
+    }
+    .yolo-tag {
+      font-family   : var(--mono);
+      font-size     : 0.52rem;
+      letter-spacing: 0.08em;
+      color         : var(--dim);
+      border        : 1px solid rgba(200,128,58,0.2);
+      padding       : 0.1rem 0.4rem;
+    }
+
+    /* Confidence bar */
+    .conf-bar {
+      height       : 2px;
+      background   : rgba(200,128,58,0.15);
+      margin-top   : 0.3rem;
+      overflow     : hidden;
+    }
+    .conf-fill {
+      height     : 100%;
+      background : var(--savanna);
+      transition : width 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    /* Habitat stats */
+    .hab-row {
+      display        : flex;
+      justify-content: space-between;
+      align-items    : center;
+      padding        : 0.3rem 0;
+      border-bottom  : 1px solid rgba(200,128,58,0.08);
+      font-family    : var(--mono);
+      font-size      : 0.65rem;
+    }
+    .hab-row:last-child { border-bottom: none; }
+    .hab-key   { color: var(--dim); }
+    .hab-val   { color: var(--cream); }
+    .hab-val.highlight { color: var(--savanna); }
+
+    /* ── Answer panel ────────────────────────────────────────── */
+    .answer-panel {
+      border-left  : 2px solid var(--savanna);
+      padding      : 1.4rem 1.5rem;
+      background   : rgba(200,128,58,0.05);
+      margin-bottom: 1rem;
+    }
+    .answer-header {
+      display        : flex;
+      justify-content: space-between;
+      align-items    : center;
+      margin-bottom  : 0.8rem;
+    }
+    .answer-meta {
+      font-family   : var(--mono);
+      font-size     : 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color         : var(--savanna);
+    }
+    .answer-latency {
+      font-family: var(--mono);
+      font-size  : 0.58rem;
+      color      : var(--dim);
+    }
+    #answer-text {
+      font-family: var(--serif);
+      font-size  : clamp(1rem, 2.2vw, 1.2rem);
+      font-weight: 300;
+      line-height: 1.75;
+      color      : var(--cream);
+    }
+
+    /* ── Sources ─────────────────────────────────────────────── */
+    .sources-wrap { margin-bottom: 1.5rem; }
+    .sources-toggle {
+      font-family   : var(--mono);
+      font-size     : 0.62rem;
+      letter-spacing: 0.1em;
+      color         : var(--dim);
+      background    : none;
+      border        : none;
+      cursor        : pointer;
+      padding       : 0.3rem 0;
+      text-decoration: underline;
+    }
+    .sources-list {
+      display    : none;
+      margin-top : 0.6rem;
+      border     : 1px solid rgba(200,128,58,0.15);
+      padding    : 0.8rem 1rem;
+      background : rgba(200,128,58,0.03);
+    }
+    .sources-list.open { display: block; }
+    .source-item {
+      font-family   : var(--mono);
+      font-size     : 0.6rem;
+      color         : var(--dim);
+      padding       : 0.25rem 0;
+      border-bottom : 1px solid rgba(200,128,58,0.07);
+      line-height   : 1.6;
+    }
+    .source-item:last-child { border-bottom: none; }
+    .source-item a { color: var(--savanna); text-decoration: none; }
+
+    /* ── Ask again ───────────────────────────────────────────── */
+    #ask-again-btn {
+      background    : none;
+      border        : 1px solid rgba(200,128,58,0.3);
+      color         : var(--dim);
+      font-family   : var(--mono);
+      font-size     : 0.62rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding       : 0.6rem 1.2rem;
+      cursor        : pointer;
+      transition    : all 0.2s;
+      display       : none;
+    }
+    #ask-again-btn.visible { display: inline-block; }
+    #ask-again-btn:hover { border-color: var(--savanna); color: var(--savanna); }
+
+    /* ── Bottom nav (mobile) ─────────────────────────────────── */
+    .bottom-nav {
+      display        : none;
+      position       : fixed;
+      bottom         : 0;
+      left           : 0;
+      right          : 0;
+      background     : rgba(15,10,5,0.95);
+      backdrop-filter: blur(12px);
+      border-top     : 1px solid rgba(200,128,58,0.15);
+      padding        : 0.6rem 0 calc(0.6rem + var(--safe-bottom));
+      justify-content: space-around;
+      z-index        : 50;
+    }
+    @media (max-width: 600px) { .bottom-nav { display: flex; } }
+
+    .bottom-nav-item {
+      display       : flex;
+      flex-direction: column;
+      align-items   : center;
+      gap           : 0.2rem;
+      font-family   : var(--mono);
+      font-size     : 0.52rem;
+      letter-spacing: 0.08em;
+      color         : var(--dim);
+      background    : none;
+      border        : none;
+      cursor        : pointer;
+      padding       : 0.3rem 1rem;
+      transition    : color 0.2s;
+    }
+    .bottom-nav-item.active { color: var(--savanna); }
+    .bottom-nav-item .nav-icon { font-size: 1.3rem; }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    footer {
+      border-top : 1px solid rgba(200,128,58,0.1);
+      padding    : 2rem 1.5rem;
+      text-align : center;
+    }
+    footer p {
+      font-family   : var(--mono);
+      font-size     : 0.58rem;
+      letter-spacing: 0.12em;
+      color         : rgba(245,237,216,0.2);
+      text-transform: uppercase;
+    }
+
+    /* ── Scrollbar ───────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: var(--night); }
+    ::-webkit-scrollbar-thumb { background: var(--dusk); }
+  </style>
+</head>
+<body>
+
+<!-- ── PWA Install Banner ────────────────────────────────────────── -->
+<div id="install-banner">
+  <p>📱 Add Mara Guide to your home screen for offline access</p>
+  <div class="banner-btns">
+    <button id="btn-install">Install</button>
+    <button id="btn-dismiss">✕</button>
+  </div>
+</div>
+
+<!-- ── Nav ──────────────────────────────────────────────────────── -->
+<nav>
+  <span class="nav-brand">Maasai <em>Mara</em></span>
+  <span class="nav-status check" id="api-status">Connecting…</span>
+</nav>
+
+<!-- ── Main ─────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <p class="hero-eyebrow">Kenya · Narok County · Wildlife Intelligence</p>
+    <h1>Wildlife <em>Guide</em></h1>
+    <p class="hero-sub">Photograph any animal · Ask anything</p>
+    <p class="hero-desc">
+      Powered by YOLOv8 detection, EfficientNet-B4 classification,
+      and Gemini RAG — grounded in IUCN, KWS, and WWF knowledge.
+    </p>
+  </div>
+
+  <!-- Upload -->
+  <p class="section-label">Step 1 — Photograph or upload</p>
+
+  <!-- Native file inputs -->
+  <input type="file" id="file-camera"  accept="image/*" capture="environment"/>
+  <input type="file" id="file-gallery" accept="image/*"/>
+
+  <div class="upload-grid" id="upload-grid">
+    <button class="upload-btn" id="btn-camera">
+      <span class="btn-icon">📷</span>
+      <span>Take Photo</span>
+      <span class="btn-sub">Opens rear camera</span>
+    </button>
+    <button class="upload-btn" id="btn-gallery">
+      <span class="btn-icon">🖼</span>
+      <span>Choose Photo</span>
+      <span class="btn-sub">From gallery or files</span>
+    </button>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-wrap" id="preview-wrap">
+    <img id="preview-img" src="" alt="Wildlife preview"/>
+    <canvas id="preview-canvas"></canvas>
+    <div class="preview-actions">
+      <button id="btn-retake">Retake</button>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <p class="section-label" style="margin-top:1.5rem">Step 2 — Ask a question</p>
+
+  <div class="chips" id="chips">
+    <button class="chip" data-q="Is this animal dangerous to tourists?">Dangerous?</button>
+    <button class="chip" data-q="What does this animal eat?">Diet?</button>
+    <button class="chip" data-q="When is the best time to see this animal?">Best time?</button>
+    <button class="chip" data-q="What is the conservation status of this species?">Conservation?</button>
+    <button class="chip" data-q="What interesting facts should I know about this animal?">Fun facts?</button>
+    <button class="chip" data-q="Where in Maasai Mara can I find this animal?">Where to find?</button>
+  </div>
+
+  <div class="question-wrap">
+    <input
+      type="text"
+      id="question-input"
+      placeholder="Is this animal dangerous? What does it eat?"
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+    />
+    <button id="ask-btn" disabled>Ask</button>
+  </div>
+
+  <!-- Error -->
+  <div class="error-panel" id="error-panel"></div>
+
+  <!-- Loading -->
+  <div class="loading-wrap" id="loading-wrap">
+    <div class="loading-step" id="step-yolo">
+      <span class="step-dot"></span>YOLOv8 — detecting animals in scene
+    </div>
+    <div class="loading-step" id="step-cnn">
+      <span class="step-dot"></span>EfficientNet-B4 — classifying species
+    </div>
+    <div class="loading-step" id="step-cv">
+      <span class="step-dot"></span>OpenCV — analysing habitat and scene
+    </div>
+    <div class="loading-step" id="step-rag">
+      <span class="step-dot"></span>FAISS — retrieving knowledge base chunks
+    </div>
+    <div class="loading-step" id="step-gemini">
+      <span class="step-dot"></span>Gemini — generating grounded answer
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <div class="results-grid">
+      <!-- Detections -->
+      <div class="result-card">
+        <p class="result-card-title">🔍 Animals Detected</p>
+        <ul class="species-list" id="species-list"></ul>
+      </div>
+      <!-- Habitat -->
+      <div class="result-card">
+        <p class="result-card-title">🌿 Scene Analysis</p>
+        <div id="habitat-info"></div>
+      </div>
+    </div>
+
+    <!-- Answer -->
+    <div class="answer-panel">
+      <div class="answer-header">
+        <span class="answer-meta" id="answer-meta">Wildlife Guide Response</span>
+        <span class="answer-latency" id="answer-latency"></span>
+      </div>
+      <p id="answer-text"></p>
+    </div>
+
+    <!-- Sources -->
+    <div class="sources-wrap">
+      <button class="sources-toggle" id="sources-toggle">
+        Show sources (0 cited)
+      </button>
+      <div class="sources-list" id="sources-list"></div>
+    </div>
+
+    <button id="ask-again-btn" class="visible">Ask another question</button>
+
+  </div>
+
+</main>
+
+<!-- ── Footer ────────────────────────────────────────────────────── -->
+<footer>
+  <p>
+    Maasai Mara Wildlife Intelligence Guide &nbsp;·&nbsp;
+    MSc Big Data Technologies &nbsp;·&nbsp;
+    Glasgow Caledonian University &nbsp;·&nbsp;
+    Alvin Kimani
+  </p>
+</footer>
+
+<!-- ── Bottom nav (mobile only) ──────────────────────────────────── -->
+<div class="bottom-nav">
+  <button class="bottom-nav-item active" id="nav-home">
+    <span class="nav-icon">🏠</span>Home
+  </button>
+  <button class="bottom-nav-item" id="nav-camera" onclick="document.getElementById('file-camera').click()">
+    <span class="nav-icon">📷</span>Camera
+  </button>
+  <button class="bottom-nav-item" id="nav-gallery" onclick="document.getElementById('file-gallery').click()">
+    <span class="nav-icon">🖼</span>Gallery
+  </button>
+</div>
+
+<script>
+// ── Configuration ──────────────────────────────────────────────────
+const API_URL = window.API_URL || "https://your-api-url.run.app";
+
+// ── DOM refs ───────────────────────────────────────────────────────
+const fileCamera    = document.getElementById("file-camera");
+const fileGallery   = document.getElementById("file-gallery");
+const btnCamera     = document.getElementById("btn-camera");
+const btnGallery    = document.getElementById("btn-gallery");
+const uploadGrid    = document.getElementById("upload-grid");
+const previewWrap   = document.getElementById("preview-wrap");
+const previewImg    = document.getElementById("preview-img");
+const previewCanvas = document.getElementById("preview-canvas");
+const btnRetake     = document.getElementById("btn-retake");
+const questionInput = document.getElementById("question-input");
+const askBtn        = document.getElementById("ask-btn");
+const errorPanel    = document.getElementById("error-panel");
+const loadingWrap   = document.getElementById("loading-wrap");
+const results       = document.getElementById("results");
+const speciesList   = document.getElementById("species-list");
+const habitatInfo   = document.getElementById("habitat-info");
+const answerText    = document.getElementById("answer-text");
+const answerMeta    = document.getElementById("answer-meta");
+const answerLatency = document.getElementById("answer-latency");
+const sourcesToggle = document.getElementById("sources-toggle");
+const sourcesList   = document.getElementById("sources-list");
+const askAgainBtn   = document.getElementById("ask-again-btn");
+const apiStatus     = document.getElementById("api-status");
+
+const steps = {
+  yolo  : document.getElementById("step-yolo"),
+  cnn   : document.getElementById("step-cnn"),
+  cv    : document.getElementById("step-cv"),
+  rag   : document.getElementById("step-rag"),
+  gemini: document.getElementById("step-gemini"),
+};
+
+// ── State ──────────────────────────────────────────────────────────
+let currentFile = null;
+
+// ── API health check ───────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(8000) });
+    const d = await r.json();
+    if (d.status === "ok") {
+      apiStatus.textContent = "● API ready";
+      apiStatus.className   = "nav-status ok";
+    } else {
+      apiStatus.textContent = "⚠ API degraded";
+      apiStatus.className   = "nav-status error";
+    }
+  } catch {
+    apiStatus.textContent = "✗ API offline";
+    apiStatus.className   = "nav-status error";
+  }
+}
+checkHealth();
+setInterval(checkHealth, 30000);
+
+// ── File handling ──────────────────────────────────────────────────
+btnCamera.addEventListener("click",  () => fileCamera.click());
+btnGallery.addEventListener("click", () => fileGallery.click());
+fileCamera.addEventListener("change",  e => handleFile(e.target.files[0]));
+fileGallery.addEventListener("change", e => handleFile(e.target.files[0]));
+btnRetake.addEventListener("click", resetImage);
+
+function handleFile(file) {
+  if (!file) return;
+  currentFile = file;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewImg.src = e.target.result;
+    uploadGrid.style.display = "none";
+    previewWrap.classList.add("visible");
+    askBtn.disabled = false;
+    clearResults();
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetImage() {
+  currentFile = null;
+  fileCamera.value = "";
+  fileGallery.value = "";
+  previewImg.src = "";
+  previewWrap.classList.remove("visible");
+  uploadGrid.style.display = "";
+  askBtn.disabled = true;
+  clearResults();
+}
+
+// ── Suggestion chips ───────────────────────────────────────────────
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    questionInput.value = chip.dataset.q;
+    questionInput.focus();
+  });
+});
+
+// ── Ask button ─────────────────────────────────────────────────────
+askBtn.addEventListener("click", handleQuery);
+questionInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !askBtn.disabled) handleQuery();
+});
+askAgainBtn.addEventListener("click", () => {
+  clearResults();
+  questionInput.value = "";
+  questionInput.focus();
+});
+
+async function handleQuery() {
+  const question = questionInput.value.trim();
+  if (!currentFile)   return showError("Please upload or photograph a wildlife image.");
+  if (!question)      return showError("Please enter a question.");
+
+  clearResults();
+  showLoading();
+
+  try {
+    const fd = new FormData();
+    fd.append("image",    currentFile, currentFile.name);
+    fd.append("question", question);
+
+    // Stagger loading steps to reflect real pipeline stages
+    const t1 = setTimeout(() => setStep("yolo",   "done"), 800);
+    const t2 = setTimeout(() => setStep("cnn",    "active"), 900);
+    const t3 = setTimeout(() => setStep("cnn",    "done"), 2000);
+    const t4 = setTimeout(() => setStep("cv",     "active"), 2100);
+    const t5 = setTimeout(() => setStep("cv",     "done"), 2800);
+    const t6 = setTimeout(() => setStep("rag",    "active"), 2900);
+    const t7 = setTimeout(() => setStep("rag",    "done"), 4000);
+    const t8 = setTimeout(() => setStep("gemini", "active"), 4100);
+
+    const startTime = Date.now();
+    const res = await fetch(`${API_URL}/analyze`, {
+      method : "POST",
+      body   : fd,
+      signal : AbortSignal.timeout(90000)
+    });
+
+    [t1,t2,t3,t4,t5,t6,t7,t8].forEach(clearTimeout);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error ${res.status}`);
+    }
+
+    const data      = await res.json();
+    const latencyMs = Date.now() - startTime;
+
+    Object.values(steps).forEach(s => s.className = "loading-step done");
+    await delay(300);
+
+    hideLoading();
+    showResults(data, latencyMs, question);
+
+    // Draw bounding boxes on preview
+    if (data.detections && data.detections.some(d => d.bbox)) {
+      drawBoxes(data.detections);
+    }
+
+  } catch (err) {
+    hideLoading();
+    if (err.name === "TimeoutError") {
+      showError("Request timed out. The model may still be loading — please try again.");
+    } else if (err.message.includes("Failed to fetch")) {
+      showError(`Cannot reach API at ${API_URL}. Check your connection.`);
+    } else {
+      showError(err.message);
+    }
+  }
+}
+
+// ── UI helpers ─────────────────────────────────────────────────────
+function showLoading() {
+  loadingWrap.classList.add("visible");
+  askBtn.disabled = true;
+  Object.values(steps).forEach(s => s.className = "loading-step");
+  setStep("yolo", "active");
+}
+
+function hideLoading() {
+  loadingWrap.classList.remove("visible");
+  askBtn.disabled = false;
+}
+
+function setStep(key, state) {
+  if (steps[key]) steps[key].className = `loading-step ${state}`;
+}
+
+function showError(msg) {
+  errorPanel.textContent = `⚠  ${msg}`;
+  errorPanel.classList.add("visible");
+}
+
+function clearResults() {
+  results.classList.remove("visible");
+  errorPanel.classList.remove("visible");
+  askAgainBtn.classList.remove("visible");
+  loadingWrap.classList.remove("visible");
+  Object.values(steps).forEach(s => s.className = "loading-step");
+  // Clear canvas
+  const ctx = previewCanvas.getContext("2d");
+  ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+}
+
+function showResults(data, latencyMs, question) {
+  // Species list
+  speciesList.innerHTML = "";
+  const dets = data.detections || [];
+  if (dets.length === 0) {
+    speciesList.innerHTML = "<li style='font-family:var(--mono);font-size:0.7rem;color:var(--dim)'>No animals detected</li>";
+  } else {
+    dets.forEach((d, i) => {
+      const li = document.createElement("li");
+      li.className = "species-item";
+      li.innerHTML = `
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+            <span class="species-name">${d.species}</span>
+            <span class="species-conf">${(d.species_conf*100).toFixed(1)}%</span>
+            <span class="yolo-tag">${d.yolo_label}</span>
+          </div>
+          <div class="conf-bar">
+            <div class="conf-fill" style="width:${d.species_conf*100}%"></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:0.52rem;color:var(--dim);margin-top:0.3rem">
+            Top-3: ${d.top3.map(t => `${t.species} ${(t.confidence*100).toFixed(0)}%`).join(" · ")}
+          </div>
+        </div>
+      `;
+      speciesList.appendChild(li);
+    });
+  }
+
+  // Habitat
+  const h = data.habitat || {};
+  habitatInfo.innerHTML = `
+    <div class="hab-row"><span class="hab-key">Habitat</span><span class="hab-val highlight">${h.habitat || "—"}</span></div>
+    <div class="hab-row"><span class="hab-key">Time of day</span><span class="hab-val highlight">${h.time_of_day || "—"}</span></div>
+    <div class="hab-row"><span class="hab-key">Vegetation</span><span class="hab-val">${((h.vegetation_ratio||0)*100).toFixed(1)}%</span></div>
+    <div class="hab-row"><span class="hab-key">Water nearby</span><span class="hab-val">${((h.water_ratio||0)*100).toFixed(1)}%</span></div>
+    <div class="hab-row"><span class="hab-key">Dry grass</span><span class="hab-val">${((h.dry_ratio||0)*100).toFixed(1)}%</span></div>
+    <div class="hab-row"><span class="hab-key">Brightness</span><span class="hab-val">${(h.brightness||0).toFixed(0)}</span></div>
+  `;
+
+  // Answer
+  const topSpecies = dets.length > 0 ? dets[0].species : "wildlife";
+  answerMeta.textContent    = `${topSpecies.charAt(0).toUpperCase()+topSpecies.slice(1)} — Wildlife Guide`;
+  answerLatency.textContent = `${latencyMs.toFixed(0)}ms`;
+  answerText.textContent    = data.answer || "No answer returned.";
+
+  // Sources
+  const srcs = data.sources || [];
+  sourcesToggle.textContent = `Show sources (${srcs.length} cited)`;
+  sourcesList.innerHTML = srcs.map(s => {
+    const urlMatch = s.match(/\[(https?:[^\]]+)\]/);
+    const url      = urlMatch ? urlMatch[1] : "#";
+    const name     = s.replace(/^-\s*/, "").split("[")[0].trim();
+    return `<div class="source-item">${name} — <a href="${url}" target="_blank" rel="noopener">${url}</a></div>`;
+  }).join("");
+
+  results.classList.add("visible");
+  askAgainBtn.classList.add("visible");
+  results.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Sources toggle
+sourcesToggle.addEventListener("click", () => {
+  sourcesList.classList.toggle("open");
+  const open = sourcesList.classList.contains("open");
+  sourcesToggle.textContent = sourcesToggle.textContent.replace(
+    open ? "Show" : "Hide", open ? "Hide" : "Show"
+  );
+});
+
+// ── Draw bounding boxes ────────────────────────────────────────────
+function drawBoxes(detections) {
+  const img = previewImg;
+  if (!img.complete) {
+    img.onload = () => drawBoxes(detections);
+    return;
+  }
+
+  const canvas = previewCanvas;
+  canvas.width  = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  canvas.style.width  = img.offsetWidth  + "px";
+  canvas.style.height = img.offsetHeight + "px";
+
+  const scaleX = img.offsetWidth  / img.naturalWidth;
+  const scaleY = img.offsetHeight / img.naturalHeight;
+  const ctx    = canvas.getContext("2d");
+
+  const colours = ["#C8803A","#5BA35B","#5B8DC8","#C85B8D","#C8C85B","#8D5BC8"];
+
+  detections.forEach((d, i) => {
+    if (!d.bbox) return;
+    const [x1, y1, x2, y2] = d.bbox;
+    const col = colours[i % colours.length];
+
+    // Scale to display size
+    const dx1 = x1*scaleX, dy1 = y1*scaleY;
+    const dx2 = x2*scaleX, dy2 = y2*scaleY;
+
+    ctx.strokeStyle = col;
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(dx1, dy1, dx2-dx1, dy2-dy1);
+
+    // Label background
+    const label = `${d.species} ${(d.species_conf*100).toFixed(0)}%`;
+    ctx.font = "bold 11px DM Mono, monospace";
+    const tw  = ctx.measureText(label).width;
+    ctx.fillStyle = col;
+    ctx.fillRect(dx1, dy1-18, tw+10, 18);
+
+    ctx.fillStyle = "#0f0a05";
+    ctx.fillText(label, dx1+5, dy1-5);
+  });
+}
+
+// ── Utility ────────────────────────────────────────────────────────
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── PWA — Service Worker ───────────────────────────────────────────
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .then(() => console.log("SW registered"))
+      .catch(e  => console.warn("SW failed:", e));
+  });
+}
+
+// ── PWA — Install prompt ───────────────────────────────────────────
+let deferredPrompt = null;
+const installBanner = document.getElementById("install-banner");
+const btnInstall    = document.getElementById("btn-install");
+const btnDismiss    = document.getElementById("btn-dismiss");
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.style.display = "flex";
+});
+
+btnInstall.addEventListener("click", async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBanner.style.display = "none";
+  console.log("PWA install outcome:", outcome);
+});
+
+btnDismiss.addEventListener("click", () => {
+  installBanner.style.display = "none";
+});
+
+window.addEventListener("appinstalled", () => {
+  installBanner.style.display = "none";
+  console.log("PWA installed successfully");
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "Maasai Mara Wildlife Guide",
+  "short_name": "Mara Guide",
+  "description": "Intelligent wildlife identification and Q&A for Maasai Mara tourists",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0a05",
+  "theme_color": "#C8803A",
+  "categories": ["travel", "education", "lifestyle"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
